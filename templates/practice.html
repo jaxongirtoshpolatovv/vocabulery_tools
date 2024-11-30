@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mashq qilish - Vocabulary Learning</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .flip-card {
+            perspective: 1000px;
+            width: 100%;
+            height: 200px;
+            cursor: pointer;
+        }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .flip-card-front {
+            background: linear-gradient(45deg, #4a90e2, #63b3ed);
+            color: white;
+        }
+        .flip-card-back {
+            background: linear-gradient(45deg, #48bb78, #68d391);
+            color: white;
+            transform: rotateY(180deg);
+        }
+        .progress-box {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+        .box-indicator {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            color: white;
+            font-size: 0.9em;
+            margin: 5px;
+        }
+        .box-1 { background-color: #e53e3e; }
+        .box-2 { background-color: #dd6b20; }
+        .box-3 { background-color: #d69e2e; }
+        .box-4 { background-color: #38a169; }
+        .box-5 { background-color: #3182ce; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-book"></i> Vocabulary Learning
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="fas fa-home"></i> Bosh sahifa
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('practice') }}">
+                            <i class="fas fa-graduation-cap"></i> Mashq qilish
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                {% if words %}
+                <div class="progress-box mb-4">
+                    <h5>O'rganish jarayoni</h5>
+                    <div id="box-info">
+                        <span class="box-indicator box-1">Box 1</span>
+                        <span class="box-indicator box-2">Box 2</span>
+                        <span class="box-indicator box-3">Box 3</span>
+                        <span class="box-indicator box-4">Box 4</span>
+                        <span class="box-indicator box-5">Box 5</span>
+                    </div>
+                    <div class="progress mt-2">
+                        <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div id="practice-container">
+                            <div class="flip-card mb-4">
+                                <div class="flip-card-inner">
+                                    <div class="flip-card-front">
+                                        <h2 id="word-display" class="display-4"></h2>
+                                        <p id="example-display" class="text-light"></p>
+                                        <p class="mt-3"><i class="fas fa-sync"></i> Tarjimani ko'rish uchun bosing</p>
+                                    </div>
+                                    <div class="flip-card-back">
+                                        <h2 id="answer-display" class="display-4"></h2>
+                                        <div class="btn-group mt-4">
+                                            <button class="btn btn-light mark-mastered">
+                                                <i class="fas fa-check"></i> Bildim
+                                            </button>
+                                            <button class="btn btn-danger mark-not-mastered">
+                                                <i class="fas fa-times"></i> Bilmadim
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h4>Hozircha o'rganish uchun so'zlar yo'q</h4>
+                        <p>Yangi so'zlar qo'shish uchun <a href="{{ url_for('index') }}">bosh sahifa</a>ga o'ting</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            let currentWords = {{ words|tojson|safe }};
+            let currentIndex = 0;
+            
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            function updateProgress(word) {
+                $('#progress-bar').css('width', word.progress + '%');
+                $('#progress-bar').text(word.progress + '%');
+                
+                // Highlight current box
+                $('.box-indicator').removeClass('fw-bold');
+                $(`.box-${word.box_number}`).addClass('fw-bold');
+            }
+
+            function showCurrentWord() {
+                if (currentWords.length > 0) {
+                    const word = currentWords[currentIndex];
+                    $('#word-display').text(word.english);
+                    $('#example-display').text(word.example || '');
+                    $('#answer-display').text(word.uzbek);
+                    updateProgress(word);
+                    
+                    // Reset flip card
+                    $('.flip-card').removeClass('flipped');
+                }
+            }
+
+            $('.flip-card').click(function() {
+                $(this).toggleClass('flipped');
+            });
+
+            $('.mark-mastered, .mark-not-mastered').click(function(e) {
+                e.stopPropagation();
+                const wordId = currentWords[currentIndex].id;
+                const isCorrect = $(this).hasClass('mark-mastered');
+                
+                $.ajax({
+                    url: `/update_mastery/${wordId}`,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ is_correct: isCorrect }),
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            currentWords[currentIndex].progress = response.progress;
+                            currentWords[currentIndex].box_number = response.box_number;
+                            
+                            if (response.mastered) {
+                                currentWords.splice(currentIndex, 1);
+                                if (currentIndex >= currentWords.length) {
+                                    currentIndex = 0;
+                                }
+                            } else {
+                                currentIndex = (currentIndex + 1) % currentWords.length;
+                            }
+                            
+                            if (currentWords.length > 0) {
+                                showCurrentWord();
+                            } else {
+                                location.reload();
+                            }
+                        }
+                    }
+                });
+            });
+
+            if (currentWords.length > 0) {
+                shuffleArray(currentWords);
+                showCurrentWord();
+            }
+        });
+    </script>
+</body>
+</html>
